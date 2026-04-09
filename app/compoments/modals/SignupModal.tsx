@@ -111,13 +111,13 @@ export default function SignupModal(){
           onClick={() => logInByGoogle()}
           disabled={loading}
           >
-           {loading ? <CircularProgress className="w-[20px] h-[20px] animate-loading-spinner"/> : 
-           <>
+           
+           
             <GoogleIcon className="w-[1em] h-[1em]"/>
             <span className="text-[14px] font-medium text-[#404654]">Login with Google</span>
-           </>
           
-            }
+          
+            
           </button>
           <button className="flex justify-start items-center gap-[12px] text-[14px]
           font-normal py-[12px] px-[20px] text-[#404654] border-[3px] border-solid border-[#ebebeb]
@@ -125,12 +125,10 @@ export default function SignupModal(){
           " onClick={() => logInAsGuest()}
           disabled={loading}
           >
-            {loading ? <CircularProgress className="w-[20px] h-[20px] animate-loading-spinner"/>  :
-              <>
+           
               <PersonIcon className="w-[1em] h-[1em]"/>
             <span className="text-[14px] font-medium text-[#404654]">Login as Guest</span>
-              </>
-              }
+             
           </button>
         </div>
         <div className="my-[24px] mx-0 flex justify-center gap-[32px] text-[rgba(0, 0, 0, .6)] items-center">
