@@ -2,23 +2,25 @@
 
 import Image from "next/image"
 import  React, { useState }  from "react"
-import logo from "../public/assets/logo-dark.png"
+
 import Link from "next/link"
 import { ArrowRightEndOnRectangleIcon, ArrowTrendingUpIcon, BookmarkIcon, Cog6ToothIcon, MagnifyingGlassIcon, QuestionMarkCircleIcon, Squares2X2Icon } from "@heroicons/react/24/outline"
 import { Bars3Icon } from "@heroicons/react/24/solid"
+import Bolt from "../public/assets/bolt.svg"
 import SideBar from "../compoments/SideBar"
 
-function Favorites(){
+
+function Settings(){
   const [isOpen, setIsOpen] = useState(false)
   return (
   <div className="flex max-w-[100vw]">
+     <SideBar isOpen={isOpen} />
     
-    <SideBar isOpen={isOpen} />
     <div
       onClick={() => setIsOpen(false)}
       className={`fixed inset-0 z-[900] bg-black/20 backdrop-blur-sm transition-opacity duration-300 md:hidden ${isOpen ? 'opacity-100 visible' : 'opacity-0 invisible pointer-events-none'}`}
     />
-     <div className={`w-full ml-0 flex flex-col md:ml-[230px] md:w-[calc(100%-230px)]`}>
+     <div className="w-full ml-0 flex flex-col md:ml-[230px] md:w-[calc(100%-230px)">
       <div className="w-full h-[80px] border-b-[1px] border-solid border-[#f1f3f4]">
           <div className="gap-[20px] relative w-full h-full max-w-[1400px] flex items-center justify-between py-0
           px-[32px] my-0 mx-auto
@@ -41,19 +43,25 @@ function Favorites(){
       pt-[40px] pb-[40px] items-start
       max-w-[1400px] w-full h-full justify-between py-0 px-[32px] my-0 mx-auto"
       >
-        <h1 className="text-[24px] font-bold mb-[8px]">Saved Movies</h1>
-        <h2 className="text-[18px] font-light text-[rgba(64,70,84,.7)]
-        pb-[16px] mb-[32px]  border-b-2 border-solid border-[#f1f3f4] w-full 
-        ">0 Movies</h2>
-        <div
-        className="w-full flex items-start flex-wrap gap-[32px]"
-        >
-          <div className="bg-[#f1f6f4] max-w-fit flex flex-col items-center
-          gap-[8px] p-[32px] rounded-[12px] mt-0 mx-auto mb-[56px] text-center
-          ">
-            <h3 className="font-bold text-[1.17em]">Save your favorite movies!</h3>
-            <p>When you save a movie, it will appear here.</p>
-          </div>
+        <h1 className="text-[32px] font-bold mb-[16px]">Settings</h1>
+        <div className="flex flex-col items-start gap-[8px] pb-[24px]">
+          <h2 className="text-[18px] font-semibold">Your Subscription Plan</h2>
+          <span>Basic</span>
+          <Link href="/plans"
+          className="text-white bg-[#320580] py-[12px] px-[16px] flex justify-center items-center gap-[6px]
+          text-[14px] font-medium rounded-[8px]
+          "
+          >
+          <span>Upgrade</span>
+           <Image src={Bolt} alt="bolt" width={16} height={16} />
+
+          </Link>
+        </div>
+        
+        <div className="flex flex-col items-start gap-[8px] pb-[24px]">
+          <h2 className="text-[18px] font-semibold">Email</h2>
+          <span>guest12345@gmail.com</span>
+          
         </div>
       </div>
     </div>
@@ -63,4 +71,4 @@ function Favorites(){
   )
 }
 
-export default Favorites
+export default Settings
