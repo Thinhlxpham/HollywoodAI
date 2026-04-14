@@ -26,6 +26,7 @@ export default function SignupModal(){
     state.modals.signUpModalOpen,
 
   )
+  const [error, setError] = useState('')
   async function logInByGoogle(){
     setLoading(true)
     try {
@@ -49,6 +50,7 @@ export default function SignupModal(){
 
   async function handleSignup(){
     setLoading(true)
+    setError('')
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
@@ -57,9 +59,20 @@ export default function SignupModal(){
       )
       router.push('/dashboard')
       return userCredential
-    } catch (error) {
-      console.error("Signup error:", error)
-      alert("Failed to sign up. Please try again.")
+    } catch (error: any) {
+      switch(error.code){
+        case 'auth/invalid-email':
+        setError('Please enter a valid email address.')
+        break
+      case 'auth/email-already-in-use':
+        setError('An account with this email already exists.')
+        break
+      case 'auth/weak-password':
+        setError('Password must be at least 6 characters.')
+        break
+      default:
+        setError('Something went wrong. Please try again.')
+      }
       setLoading(false)
     }
   }
@@ -103,6 +116,7 @@ export default function SignupModal(){
       bg-white">
         <XMarkIcon onClick={() => dispatch(closeSignupModal())} className="w-[25px] h-auto text-[#1f2328] cursor-pointer absolute top-[16px] right-[16px]"/>
         <h3 className="text-center mb-[20px] text-[32px] font-bold text-[#1f2328]">Sign Up</h3>
+        {error && <span className="text-[#f56c6c] text-[13px] mb-[12px]">{error}</span>}
         <div className="flex flex-col gap-[12px]">
           <button className="flex justify-start items-center gap-[12px] text-[14px]
           font-normal py-[12px] px-[20px] text-[#404654] border-[3px] border-solid border-[#ebebeb]
@@ -172,10 +186,7 @@ export default function SignupModal(){
           className="w-full h-[44px] py-0 px-[20px] text-[15px] font-bold rounded-[9999px] bg-[#320580]
            text-white border-none flex justify-center
           items-center 
-          " onClick={() => {
-            handleSignup()
-            dispatch(openLoginModal())
-          }}
+          " onClick={() => handleSignup()}
           >{loading ? <CircularProgress className="w-[20px] h-[20px] animate-loading-spinner"/> :"Sign Up"}</button>
         </div>
         <div className="mt-[20px] tex-center text-[13px] flex justify-center gap-[4px]">

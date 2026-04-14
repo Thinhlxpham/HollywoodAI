@@ -22,6 +22,7 @@ export default function LogInModal(){
     const [loading, setLoading] = useState(false)
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+    const [error, setError] = useState('')
 
    async function logInByGoogle(){
     setLoading(true)
@@ -42,6 +43,7 @@ export default function LogInModal(){
 
     async function handleLogIn(){
       setLoading(true)
+      setError('')
       try {
         const userCredential = await signInWithEmailAndPassword(auth, email, password)
         if(userCredential){
@@ -49,9 +51,21 @@ export default function LogInModal(){
         } else {
           throw new Error('Firebase: Error(auth/user-not-found)')
         }
-      } catch (error) {
-        console.error("Login error:", error)
-        alert("Failed to log in. Please try again.")
+      } catch (error: any) {
+        switch(error.code){
+          case 'auth/invalid-email':
+        setError('Please enter a valid email address.')
+        break
+      case 'auth/email-already-in-use':
+        setError('An account with this email already exists.')
+        break
+      case 'auth/weak-password':
+        setError('Password must be at least 6 characters.')
+        break
+      default:
+        setError('Something went wrong. Please try again.')
+        }
+        
         setLoading(false)
       }
     }
@@ -82,6 +96,7 @@ export default function LogInModal(){
       bg-white">
         <XMarkIcon onClick={() => dispatch(closeLoginModal())} className="w-[25px] h-auto text-[#1f2328] cursor-pointer absolute top-[16px] right-[16px]"/>
         <h3 className="text-center mb-[20px] text-[32px] font-bold text-[#1f2328]">Log In</h3>
+        {auth && <span className="text-[#f56c6c] mb-[16px] text-[14px]">Firebase: Error (auth/wrong-password).</span>}
         <div className="flex flex-col gap-[12px]">
           <button className="flex justify-start items-center gap-[12px] text-[14px]
           font-normal py-[12px] px-[20px] text-[#404654] border-[3px] border-solid border-[#ebebeb]

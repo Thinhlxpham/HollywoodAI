@@ -1,14 +1,14 @@
 "use client"
 
-import Image from "next/image"
-import  React, { useEffect, useState }  from "react"
+import { Bars3Icon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import SideBar from "../compoments/SideBar";
+import Link from "next/link";
+import SearchMovieSkeleton from "../skeleton/SearchMovieSkeleton";
+import {useEffect, useState} from 'react'
+import HeaderPlans from "../compoments/HeaderPlans";
+import BodyPlans from "../compoments/BodyPlans";
+import FooterPlans from "../compoments/FooterPlans";
 
-import Link from "next/link"
-import { ArrowRightEndOnRectangleIcon, ArrowTrendingUpIcon, BookmarkIcon, Cog6ToothIcon, MagnifyingGlassIcon, QuestionMarkCircleIcon, Squares2X2Icon } from "@heroicons/react/24/outline"
-import { Bars3Icon } from "@heroicons/react/24/solid"
-import Bolt from "../public/assets/bolt.svg"
-import SideBar from "../compoments/SideBar"
-import SearchMovieSkeleton from "../skeleton/SearchMovieSkeleton"
 
 interface Movie {
   subscriptionRequired?: string
@@ -19,36 +19,34 @@ interface Movie {
   duration: number
   rating: string
 }
+export default function Plans(){
+   const [isOpen, setIsOpen] = useState(false)
+     const [search, setSearch] = useState('')
+      const [moviesList, setMoviesList] = useState<Movie[]>([])
+      const [topMovies, setTopMovies] = useState<Movie[]>([])
+      const [loading, setLoading] = useState(true)
 
-function Settings(){
-  const [isOpen, setIsOpen] = useState(false)
-   const [search, setSearch] = useState('')
-    const [moviesList, setMoviesList] = useState<Movie[]>([])
-    const [topMovies, setTopMovies] = useState<Movie[]>([])
-    const [loading, setLoading] = useState(true)
-  
-  
-    const combineMovies = [...moviesList, ...topMovies];
-    const movieSearchPopup = search ? combineMovies.filter((movie) => movie.title.toLowerCase().includes(search.toLowerCase())) : []
-  
-    useEffect(() => {
-       async function fetchMoviesList() {
-        const response = await fetch('https://advanced-internship-api-production.up.railway.app/selectedMovies')
-        const data = await response.json()
-        setMoviesList(data.data)
-        setLoading(false)
-      }
-      async function fetchTopMovies() {
-        const response = await fetch('https://advanced-internship-api-production.up.railway.app/topMovies')
-        const data = await response.json()
-        setTopMovies(data.data)
-        setLoading(false)
-      }
-      fetchMoviesList()
-      fetchTopMovies()
-    }, [])
+  const combineMovies = [...moviesList, ...topMovies];
+      const movieSearchPopup = search ? combineMovies.filter((movie) => movie.title.toLowerCase().includes(search.toLowerCase())) : []
+    
+      useEffect(() => {
+         async function fetchMoviesList() {
+          const response = await fetch('https://advanced-internship-api-production.up.railway.app/selectedMovies')
+          const data = await response.json()
+          setMoviesList(data.data)
+          setLoading(false)
+        }
+        async function fetchTopMovies() {
+          const response = await fetch('https://advanced-internship-api-production.up.railway.app/topMovies')
+          const data = await response.json()
+          setTopMovies(data.data)
+          setLoading(false)
+        }
+        fetchMoviesList()
+        fetchTopMovies()
+      }, [])
   return (
-  <div className="flex max-w-[100vw]">
+    <div className="flex max-w-[100vw]">
      <SideBar isOpen={isOpen} />
     
     <div
@@ -111,38 +109,10 @@ function Settings(){
             </div>
           </div>
     </div>
-    <div>
-      <div
-      className="flex flex-col 
-      pt-[40px] pb-[40px] items-start
-      max-w-[1400px] w-full h-full justify-between py-0 px-[32px] my-0 mx-auto"
-      >
-        <h1 className="text-[32px] font-bold mb-[16px]">Settings</h1>
-        <div className="flex flex-col items-start gap-[8px] pb-[24px]">
-          <h2 className="text-[18px] font-semibold">Your Subscription Plan</h2>
-          <span>Basic</span>
-          <Link href="/plans"
-          className="text-white bg-[#320580] py-[12px] px-[16px] flex justify-center items-center gap-[6px]
-          text-[14px] font-medium rounded-[8px]
-          "
-          >
-          <span>Upgrade</span>
-           <Image src={Bolt} alt="bolt" width={16} height={16} />
-
-          </Link>
-        </div>
-        
-        <div className="flex flex-col items-start gap-[8px] pb-[24px]">
-          <h2 className="text-[18px] font-semibold">Email</h2>
-          <span>guest12345@gmail.com</span>
-          
-        </div>
-      </div>
-    </div>
-     </div>
+    <HeaderPlans />
+    <BodyPlans />
+    <FooterPlans />
   </div>
-    
+  </div>
   )
 }
-
-export default Settings
