@@ -2,11 +2,7 @@
 
 import { BackwardIcon, ForwardIcon, PauseIcon, PlayIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
-import { useEffect, useState } from "react";
-
-import { useAudioPlayer } from "../../context/AudioPlayerContext"
-
-
+import { useEffect, useRef, useState, ChangeEvent } from "react";
 
 function formatTime(value: number) {
   if (!value || Number.isNaN(value)) return "00:00";
@@ -16,19 +12,12 @@ function formatTime(value: number) {
 }
 
 export default function Control({ params }: { params: { id: string } }) {
-  const {
-    currentTrack,
-    isPlaying,
-    currentTime,
-    duration,
-    togglePlay,
-    skipNext,
-    skipPrevious,
-    seek,
-  } = useAudioPlayer();
   const { id } = params;
   const [movie, setMovie] = useState<any>(null);
-  const [loading, setLoading] = useState(true)
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   async function IndividualMovie() {
     if (!id) return;
@@ -36,27 +25,82 @@ export default function Control({ params }: { params: { id: string } }) {
     const data = await response.json();
     const result = data.data;
     setMovie(result);
-    setLoading(false);
   }
 
   useEffect(() => {
     IndividualMovie();
   }, [id]);
 
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const handleLoadedMetadata = () => {
+      setDuration(audio.duration || 0);
+      setCurrentTime(audio.currentTime || 0);
+    };
+
+    const handleTimeUpdate = () => {
+      setCurrentTime(audio.currentTime);
+    };
+
+    const handleEnded = () => {
+      setIsPlaying(false);
+    };
+
+    audio.addEventListener("loadedmetadata", handleLoadedMetadata);
+    audio.addEventListener("timeupdate", handleTimeUpdate);
+    audio.addEventListener("ended", handleEnded);
+
+    return () => {
+      audio.removeEventListener("loadedmetadata", handleLoadedMetadata);
+      audio.removeEventListener("timeupdate", handleTimeUpdate);
+      audio.removeEventListener("ended", handleEnded);
+    };
+  }, [movie?.summary]);
+
+  const handlePlay = async () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (isPlaying) {
+      audio.pause();
+      setIsPlaying(false);
+      return;
+    }
+
+    try {
+      await audio.play();
+      setIsPlaying(true);
+    } catch (error) {
+      console.error("Audio playback error:", error);
+    }
+  };
+
+  const handleSeek = (event: ChangeEvent<HTMLInputElement>) => {
+    const value = Number(event.target.value);
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.currentTime = value;
+    setCurrentTime(value);
+  };
+
   
 
 
   return (
     <>
-     
+      {movie?.summary && (
+        <audio ref={audioRef} src={movie.summary} preload="metadata" />
+      )}
       <div className="flex gap-[12px] w-[calc(100% / 3)]">
-        {currentTrack?.thumbnail || movie?.imageLink ? (
+        {movie?.imageLink ? (
           <figure className="flex max-h-[48px] h-[48px] min-h-[48px] w-auto">
             <Image
-              src={movie?.imageLink!}
+              src={movie.imageLink}
               width={50}
               height={50}
-              alt={movie?.id }
+              alt={movie?.id || "cover"}
             />
           </figure>
         ) : (
@@ -72,14 +116,13 @@ export default function Control({ params }: { params: { id: string } }) {
       <div>
         <div className="flex gap-[12px] items-center justify-center">
           <button
-            onClick={skipPrevious}
             className="rounded-[50%] cursor-pointer border-none bg-transparent"
             type="button"
           >
             <BackwardIcon className="w-[20px] h-[20px] transition-all duration-200 text-white" />
           </button>
           <button
-            onClick={togglePlay}
+            onClick={handlePlay}
             className="w-[40px] h-[40px] bg-white rounded-[50%] cursor-pointer border-none flex items-center justify-center"
             type="button"
           >
@@ -90,7 +133,6 @@ export default function Control({ params }: { params: { id: string } }) {
             )}
           </button>
           <button
-            onClick={skipNext}
             className="rounded-[50%] cursor-pointer border-none bg-transparent"
             type="button"
           >
@@ -104,8 +146,9 @@ export default function Control({ params }: { params: { id: string } }) {
           type="range"
           min={0}
           max={duration || 0}
+          step={0.1}
           value={currentTime}
-          onChange={(event) => seek(Number(event.target.value))}
+          onChange={handleSeek}
           className="relative bg-[#ccc] w-full h-[2px] rounded-[2px] cursor-pointer"
         />
         <span className="text-white text-[14px] w-[48px] text-right">{formatTime(duration)}</span>
