@@ -1,6 +1,12 @@
-"use client"
+"use client";
 
-import { BackwardIcon, ForwardIcon, PauseIcon, PlayIcon } from "@heroicons/react/24/solid";
+import { useAudioPlayerContext } from "@/app/context/AudioPlayerContext";
+import {
+  BackwardIcon,
+  ForwardIcon,
+  PauseIcon,
+  PlayIcon,
+} from "@heroicons/react/24/solid";
 import Image from "next/image";
 import { useEffect, useRef, useState, ChangeEvent } from "react";
 
@@ -11,89 +17,86 @@ function formatTime(value: number) {
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
+interface Movie {
+  id: string;
+  title: string;
+  director?: string;
+  imageLink?: string;
+}
+
+const AUDIO_BASE_URL =
+  "https://advanced-internship-api-production.up.railway.app/";
+
 export default function Control({ params }: { params: { id: string } }) {
   const { id } = params;
-  const [movie, setMovie] = useState<any>(null);
+  const { currentTrack } = useAudioPlayerContext();
+  const [movie, setMovie] = useState<Movie | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  async function IndividualMovie() {
-    if (!id) return;
-    const response = await fetch(`https://advanced-internship-api-production.up.railway.app/movies/${id}`);
-    const data = await response.json();
-    const result = data.data;
-    setMovie(result);
-  }
-
+  // Fetch movie info for the sidebar display
   useEffect(() => {
-    IndividualMovie();
+    if (!id) return;
+    fetch(
+      `https://advanced-internship-api-production.up.railway.app/movies/${id}`,
+    )
+      .then((r) => r.json())
+      .then((data) => {
+        const result = data.data;
+        setMovie(result);
+
+        // ✅ Auto-load audio from this movie's audioLink if no track is set via context
+        if (!currentTrack && result?.audioLink && audioRef.current) {
+          const url = `${AUDIO_BASE_URL}${result.audioLink}`;
+          audioRef.current.src = url;
+          audioRef.current.load();
+        }
+      });
   }, [id]);
 
+  // When context track changes (e.g. user picks from a list), load that
   useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    const handleLoadedMetadata = () => {
-      setDuration(audio.duration || 0);
-      setCurrentTime(audio.currentTime || 0);
-    };
-
-    const handleTimeUpdate = () => {
-      setCurrentTime(audio.currentTime);
-    };
-
-    const handleEnded = () => {
-      setIsPlaying(false);
-    };
-
-    audio.addEventListener("loadedmetadata", handleLoadedMetadata);
-    audio.addEventListener("timeupdate", handleTimeUpdate);
-    audio.addEventListener("ended", handleEnded);
-
-    return () => {
-      audio.removeEventListener("loadedmetadata", handleLoadedMetadata);
-      audio.removeEventListener("timeupdate", handleTimeUpdate);
-      audio.removeEventListener("ended", handleEnded);
-    };
-  }, [movie?.summary]);
-
-  const handlePlay = async () => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    if (isPlaying) {
-      audio.pause();
-      setIsPlaying(false);
-      return;
-    }
-
-    try {
-      await audio.play();
+    if (audioRef.current && currentTrack?.src) {
+      audioRef.current.src = currentTrack.src;
+      audioRef.current.load();
+      audioRef.current.play().catch(console.error);
       setIsPlaying(true);
-    } catch (error) {
-      console.error("Audio playback error:", error);
     }
-  };
+  }, [currentTrack]);
 
-  const handleSeek = (event: ChangeEvent<HTMLInputElement>) => {
-    const value = Number(event.target.value);
-    const audio = audioRef.current;
-    if (!audio) return;
-    audio.currentTime = value;
+  function togglePlay() {
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play().catch(console.error);
+    }
+    setIsPlaying(!isPlaying);
+  }
+
+  function handleTimeUpdate() {
+    if (!audioRef.current) return;
+    setCurrentTime(audioRef.current.currentTime);
+  }
+
+  function handleLoadedMetadata() {
+    if (!audioRef.current) return;
+    setDuration(audioRef.current.duration);
+  }
+
+  function handleSeek(e: ChangeEvent<HTMLInputElement>) {
+    if (!audioRef.current) return;
+    const value = Number(e.target.value);
+    audioRef.current.currentTime = value;
     setCurrentTime(value);
-  };
-
-  
-
+  }
 
   return (
     <>
-      {movie?.summary && (
-        <audio ref={audioRef} src={movie.summary} preload="metadata" />
-      )}
-      <div className="flex gap-[12px] w-[calc(100% / 3)]">
+      {/* Track info */}
+      <div className="flex gap-[12px] w-[calc(100%/3)]">
         {movie?.imageLink ? (
           <figure className="flex max-h-[48px] h-[48px] min-h-[48px] w-auto">
             <Image
@@ -113,46 +116,70 @@ export default function Control({ params }: { params: { id: string } }) {
           <p>{movie?.director}</p>
         </div>
       </div>
-      <div>
-        <div className="flex gap-[12px] items-center justify-center">
-          <button
-            className="rounded-[50%] cursor-pointer border-none bg-transparent"
-            type="button"
-          >
-            <BackwardIcon className="w-[20px] h-[20px] transition-all duration-200 text-white" />
-          </button>
-          <button
-            onClick={handlePlay}
-            className="w-[40px] h-[40px] bg-white rounded-[50%] cursor-pointer border-none flex items-center justify-center"
-            type="button"
-          >
-            {isPlaying ? (
-              <PauseIcon className="text-black w-[20px] h-[20px] transition-all duration-200" />
-            ) : (
-              <PlayIcon className="text-black w-[20px] h-[20px] transition-all duration-200" />
-            )}
-          </button>
-          <button
-            className="rounded-[50%] cursor-pointer border-none bg-transparent"
-            type="button"
-          >
-            <ForwardIcon className="w-[20px] h-[20px] transition-all duration-200 text-white" />
-          </button>
-        </div>
+
+      {/* Playback controls */}
+      <div className="flex gap-[12px] items-center justify-center">
+        <button
+          className="rounded-[50%] cursor-pointer border-none bg-transparent"
+          type="button"
+          onClick={() => {
+            if (!audioRef.current) return;
+            audioRef.current.currentTime = Math.min(
+              audioRef.current.currentTime - 5,
+              duration,
+            );
+          }}
+        >
+          <BackwardIcon className="w-[20px] h-[20px] text-white" />
+        </button>
+        <button
+          className="w-[40px] h-[40px] bg-white rounded-[50%] cursor-pointer border-none flex items-center justify-center"
+          type="button"
+          onClick={togglePlay}
+        >
+          {isPlaying ? (
+            <PauseIcon className="text-black w-[20px] h-[20px]" />
+          ) : (
+            <PlayIcon className="text-black w-[20px] h-[20px]" />
+          )}
+        </button>
+        <button
+          className="rounded-[50%] cursor-pointer border-none bg-transparent"
+          type="button"
+          onClick={() => {
+            if (!audioRef.current) return;
+            audioRef.current.currentTime = Math.min(
+              audioRef.current.currentTime + 5,
+              duration,
+            );
+          }}
+        >
+          <ForwardIcon className="w-[20px] h-[20px] text-white" />
+        </button>
       </div>
-      <div className="flex items-center gap-[16px]">
-        <span className="text-white text-[14px] w-[48px] text-right">{formatTime(currentTime)}</span>
+
+      {/* Progress bar */}
+      <div className="flex items-center gap-[16px] w-[calc(100%/3)]">
+        <audio
+          ref={audioRef}
+          onTimeUpdate={handleTimeUpdate}
+          onLoadedMetadata={handleLoadedMetadata}
+          onError={(e) => console.error("Audio error:", e)}
+        />
+        <span className="text-white text-[14px] w-[48px] text-right">
+          {formatTime(currentTime)}
+        </span>
         <input
           type="range"
           min={0}
           max={duration || 0}
-          step={0.1}
           value={currentTime}
           onChange={handleSeek}
           className="relative bg-[#ccc] w-full h-[2px] rounded-[2px] cursor-pointer"
         />
-        <span className="text-white text-[14px] w-[48px] text-right">{formatTime(duration)}</span>
-
+        <span className="text-white text-[14px] w-[48px] text-right">
+          {formatTime(duration)}
+        </span>
       </div>
     </>
   );

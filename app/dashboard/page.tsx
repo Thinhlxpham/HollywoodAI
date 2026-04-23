@@ -8,6 +8,8 @@ import SideBar from "../compoments/SideBar"
 import useEmblaCarousel from 'embla-carousel-react'
 import MovieCardSkeleton from "../skeleton/MovieCardSkeleton"
 import SearchMovieSkeleton from "../skeleton/SearchMovieSkeleton"
+import LogInModal from "../compoments/modals/LogInModal"
+import { getSubscriptionStatus } from "@/app/payment/getSubscriptionStatus"
 
 interface Movie {
   subscriptionRequired?: string
@@ -17,6 +19,7 @@ interface Movie {
   director: string
   duration: number
   rating: string
+
 }
 
 // Merged into one shared interface
@@ -27,8 +30,14 @@ interface MovieCardProps {
   author: string
   duration: number
   rating: string
+
 }
 
+function formatTime(value: number) {
+  const minutes = Math.floor(value / 60);
+  const seconds = Math.floor(value % 60);
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
 
 
 function Dashboard() {
@@ -37,34 +46,77 @@ function Dashboard() {
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  
+  const [plan, setPlan] = useState<string | null>(null)
+
+  function getAudioDuration(url: string): Promise<number> {
+    return new Promise((resolve) => {
+      const audio = new Audio(url);
+
+      audio.addEventListener("loadedmetadata", () => {
+        resolve(audio.duration);
+      });
+    });
+  }
+
   const [selectedRef, selectedApi] = useEmblaCarousel({ loop: true, slidesToScroll: 6 })
   const [topRef, topApi] = useEmblaCarousel({ loop: true, slidesToScroll: 6 })
 
   const combinedMovies = [...moviesList, ...topMovies]
   const movieSearchPopup = search
     ? combinedMovies.filter((movie) =>
-        movie.title.toLowerCase().includes(search.toLowerCase()) 
-        
-      )
+      movie.title.toLowerCase().includes(search.toLowerCase())
+
+    )
     : []
 
   useEffect(() => {
     async function fetchMoviesList() {
       const response = await fetch('https://advanced-internship-api-production.up.railway.app/selectedMovies')
       const data = await response.json()
-      setMoviesList(data.data)
+
+      const moviesWithDuration = await Promise.all(
+        data.data.map(async (movie: any) => {
+          if (!movie.audioLink) return { ...movie, duration: 0 }
+
+          const duration = await getAudioDuration(
+            `https://advanced-internship-api-production.up.railway.app/${movie.audioLink}`
+          )
+
+          return { ...movie, duration }
+        })
+      )
+      setMoviesList(moviesWithDuration)
       setLoading(false)
     }
     async function fetchTopMovies() {
       const response = await fetch('https://advanced-internship-api-production.up.railway.app/topMovies')
       const data = await response.json()
-      setTopMovies(data.data)
+      const moviesWithDuration = await Promise.all(
+        data.data.map(async (movie: any) => {
+          if (!movie.audioLink) return { ...movie, duration: 0 }
+
+          const duration = await getAudioDuration(
+            `https://advanced-internship-api-production.up.railway.app/${movie.audioLink}`
+          )
+
+          return { ...movie, duration }
+        })
+      )
+      setTopMovies(moviesWithDuration)
       setLoading(false)
     }
     fetchMoviesList()
     fetchTopMovies()
-    
+
+  }, [])
+
+  useEffect(() => {
+    const fetchPlan = async () => {
+      const result = await getSubscriptionStatus()
+      setPlan(result)
+    }
+
+    fetchPlan()
   }, [])
 
   return (
@@ -93,26 +145,26 @@ function Dashboard() {
             </div>
 
             <Bars3Icon onClick={() => setIsOpen(!isOpen)} className="block md:hidden w-[32px] h-[32px] min-w-[32px] min-h-[32px] cursor-pointer" />
-            <div 
-            className="flex flex-col absolute bg-white w-full max-w-[440px] overflow-y-auto max-h-[440px] ml-auto 
-            top-[80px] left-[32px] border border-solid border-[#e1e7ea] shadow-[0_0_6px_0_rgba(0,0,0,0.14)] z-10 rounded-[20px]
+            <div
+              className="flex flex-col absolute bg-white w-full max-w-[440px] overflow-y-auto max-h-[440px]
+              top-[80px] left-[32px] right-[32px] border border-solid border-[#e1e7ea] shadow-[0_0_6px_0_rgba(0,0,0,0.14)] z-10 rounded-[20px]
             ">
-             {search && movieSearchPopup.length >= 1 && (<div
-                 
-              className="py-[12px] px-[24px] text-[16px] font-medium border border-b border-solid border-[#e1e7ea]
+              {search && movieSearchPopup.length >= 1 && (<div
+
+                className="py-[12px] px-[24px] text-[16px] font-medium border border-b border-solid border-[#e1e7ea]
               sticky top-0 bg-white z-2"
               >
                 <h3 className="text-[16px] font-bold text-[#1f2328]">Search Results</h3>
               </div>)}
-              
+
               {search && movieSearchPopup.length === 0 && (
                 <div className="p-[24px] text-[14px] text-[rgba(64,70,84,.7)]">No results found.</div>
               )}
               {!loading ? movieSearchPopup.map((movie) => (
-                <>
-                
-               <Link
-                 key={movie.id}
+
+
+                <Link
+                  key={movie.id}
                   href={`/movies/${movie.id}`}
                   className="flex items-center p-[24px] gap-[24px] h-[120px] border border-solid border-b-[#e1e7ea] duration-150 text-black"
                 >
@@ -126,9 +178,9 @@ function Dashboard() {
                     <span className="text-[14px] text-[rgba(64,70,84,.7)]">{movie.director}</span>
                   </div>
                 </Link>
-                </>
-               
-              )): new Array(movieSearchPopup.length).fill(0).map((_,index) => <SearchMovieSkeleton key={index}/>)}
+
+
+              )) : new Array(movieSearchPopup.length).fill(0).map((_, index) => <SearchMovieSkeleton key={index} />)}
             </div>
           </div>
         </div>
@@ -144,7 +196,7 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* Selected Movies Carousel */}
+
         <div className="pt-[40px]">
           <div className="flex flex-col items-start w-full h-full max-w-[1400px] justify-between py-0 px-[32px] my-0 mx-auto">
             <h2 className="text-[22px] font-bold">Selected just for you</h2>
@@ -153,26 +205,30 @@ function Dashboard() {
               <div className="flex gap-[20px]">
                 {!loading ? moviesList.map((movie) => (
                   <Link key={movie.id} className="flex-[0_0_160px] min-w-0 pl-[20px]" href={`/movies/${movie.id}`}>
-                    
-                     <MovieCard
+
+                    <MovieCard
                       image={movie.imageLink}
-                      
-                      premium={movie.subscriptionRequired ? "Premium" : undefined}
+
+                      premium={
+                        movie.subscriptionRequired && !plan
+                          ? "Premium"
+                          : undefined
+                      }
                       title={movie.title}
                       author={movie.director}
-                      duration={10}
+                      duration={movie.duration}
                       rating={movie.rating}
                     />
-                    
-                   
+
+
                   </Link>
-                )): new Array(0, 6).fill(0).map((_, index) => <MovieCardSkeleton key={index}/>)}
+                )) : new Array(6).fill(0).map((_, index) => <MovieCardSkeleton key={index} />)}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Top Movies Carousel */}
+
         <div className="p-[40px_0_88px]">
           <div className="w-full h-full max-w-[1400px] flex justify-between py-0 px-[32px] my-0 mx-auto flex-col items-start">
             <h2 className="text-[22px] font-bold">Top Movies</h2>
@@ -181,25 +237,30 @@ function Dashboard() {
               <div className="flex gap-[20px]">
                 {!loading ? topMovies.map((movie) => (
                   <Link key={movie.id} className="flex-[0_0_160px] min-w-0 pl-[20px]" href={`/movies/${movie.id}`}>
-                    
-                      <MovieCard
+
+                    <MovieCard
                       image={movie.imageLink}
-                  
-                      premium={movie.subscriptionRequired ? "Premium" : undefined}
+
+                      premium={
+                        movie.subscriptionRequired && !plan
+                          ? "Premium"
+                          : undefined
+                      }
                       title={movie.title}
                       author={movie.director}
-                      duration={10}
+                      duration={movie.duration}
                       rating={movie.rating}
                     />
-                    
-                    
+
+
                   </Link>
-                )): new Array(0, 6).fill(0).map((_, index) => <MovieCardSkeleton key={index}/>)}
+                )) : new Array(6).fill(0).map((_, index) => <MovieCardSkeleton key={index} />)}
               </div>
             </div>
           </div>
         </div>
       </div>
+      <LogInModal />
     </div>
   )
 }
@@ -222,6 +283,8 @@ function MovieCard({ premium, image, title, author, duration, rating }: MovieCar
             className="object-cover"
           />
         </figure>
+
+
       </div>
       <div className="flex flex-col w-full">
         <span className="text-[14px] font-bold mb-[4px]">{title}</span>
@@ -229,7 +292,7 @@ function MovieCard({ premium, image, title, author, duration, rating }: MovieCar
         <div className="flex gap-[8px]">
           <div className="flex items-center gap-[4px] text-[12px] font-light text-[rgba(64,70,84,.7)]">
             <ClockIcon className="w-[1em] h-[1em]" />
-            <span>{duration}</span>
+            <span>{formatTime(duration)}</span>
           </div>
           <div className="flex items-center gap-[4px] text-[12px] font-light text-[rgba(64,70,84,.7)]">
             <StarIcon className="w-[1em] h-[1em]" />

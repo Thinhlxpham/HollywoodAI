@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import {
   createContext,
@@ -7,8 +7,8 @@ import {
   ReactNode,
   Dispatch,
   SetStateAction,
-} from 'react';
-import { tracks } from '../data/tracks';
+} from "react";
+import { getTracks } from "../data/tracks";
 export interface Track {
   title: string;
   src: string;
@@ -19,16 +19,12 @@ interface AudioPlayerContextType {
   currentTrack: Track | null;
   setCurrentTrack: Dispatch<SetStateAction<Track | null>>;
 }
-const AudioPlayerContext = createContext<
-  AudioPlayerContextType | undefined
->(undefined);
-export const AudioPlayerProvider = ({
-  children,
-}: {
-  children: ReactNode;
-}) =>{
+const AudioPlayerContext = createContext<AudioPlayerContextType | undefined>(
+  undefined,
+);
+export const AudioPlayerProvider = ({ children }: { children: ReactNode }) => {
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
-  const contextValue= {
+  const contextValue = {
     currentTrack,
     setCurrentTrack,
   };
@@ -42,7 +38,7 @@ export const useAudioPlayerContext = (): AudioPlayerContextType => {
   const context = useContext(AudioPlayerContext);
   if (context === undefined) {
     throw new Error(
-      'useAudioPlayerContext must be used within an AudioPlayerProvider'
+      "useAudioPlayerContext must be used within an AudioPlayerProvider",
     );
   }
   return context;
