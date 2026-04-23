@@ -1,46 +1,42 @@
+import { Track } from "../types/track";
+
 interface Movie {
-  id: string
-  title: string
-  summary: string
-  author?: string
-  imageLink?: string
+  id: string;
+  title: string;
+  director?: string;
+  audioLink?: string;
+  imageLink?: string;
 }
 
-async function fetchMoviesList(): Promise<Movie[]>{
-   const response = await fetch('https://advanced-internship-api-production.up.railway.app/selectedMovies')
-  const data = await response.json()
-  const results = data.data
-  return results
+const AUDIO_BASE_URL =
+  "https://advanced-internship-api-production.up.railway.app";
+
+async function fetchMoviesList(): Promise<Movie[]> {
+  const response = await fetch(
+    "https://advanced-internship-api-production.up.railway.app/selectedMovies",
+  );
+  const data = await response.json();
+  return data.data;
 }
 
+async function fetchTopMovies(): Promise<Movie[]> {
+  const response = await fetch(
+    "https://advanced-internship-api-production.up.railway.app/topMovies",
+  );
+  const data = await response.json();
+  return data.data;
+}
 
- async function fetchTopMovies(): Promise<Movie[]>{
-      const response = await fetch('https://advanced-internship-api-production.up.railway.app/topMovies')
-      const data = await response.json()
-      const results = data.data
-      return results
-    }
-
-
-export async function getTracks() {
-  const [movieList, topMovie] = await Promise.all([
+export async function getTracks(): Promise<Track[]> {
+  const [movieList, topMovies] = await Promise.all([
     fetchMoviesList(),
-    fetchTopMovies()
-  ])
+    fetchTopMovies(),
+  ]);
 
-  const combineMovie = [...movieList, ...topMovie]
-
-  return combineMovie.map((movie: Movie) => ({
+  return [...movieList, ...topMovies].map((movie: Movie) => ({
     title: movie.title,
-    src: movie.summary,
-    author: movie.author,
-    thumbnail: movie.imageLink || '',
-  }))
+    src: movie.audioLink ? `${AUDIO_BASE_URL}/${movie.audioLink}` : "", // ← FIXED
+    author: movie.director ?? "",
+    thumbnail: movie.imageLink ?? "",
+  }));
 }
-
-export const tracks = getTracks()
-
-
-
-
-

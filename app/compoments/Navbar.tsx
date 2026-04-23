@@ -29,12 +29,14 @@ function Navbar(){
        <NavLink text="How it works"/>
        <NavLink text="Privacy Policy"/>
       </div>
-      <button className="cursor-pointer h-[40px] text-[15px] font-semibold py-[10px] px-[16px] 
-      flex items-center justify-center rounded-[8px] transition duration-200 ease bg-[#00000019]
-      outline-none hover:text-white hover:bg-black hover:scale-[1.1]
-      "
-      onClick={() => dispatch(openSignupModal())}
-      >Sign Up</button>
+      <div className="flex items-center gap-[10px]">
+       
+        <button className="cursor-pointer h-[40px] text-[15px] font-semibold py-[10px] px-[16px] 
+        flex items-center justify-center rounded-[8px] transition duration-200 ease bg-[#00000019]
+        outline-none hover:text-white hover:bg-black hover:scale-[1.1]"
+        onClick={() => dispatch(openSignupModal())}
+        >Sign Up</button>
+      </div>
     </nav>
   )
 }

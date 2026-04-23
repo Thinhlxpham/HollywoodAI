@@ -19,8 +19,6 @@ export default function Home() {
     <Step />
     <Footer />
     <SignupModal />
-    <LogInModal />
-    <ForgotPassword />
     </div>
   );
 }

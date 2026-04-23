@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import "./globals.css"
+import "./globals.css";
 import StoreProvider from "@/redux/StoreProvider";
 import { store } from "@/redux/store";
 import { AudioPlayerProvider } from "./context/AudioPlayerContext";
+import SignupModal from "./compoments/modals/SignupModal";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -23,6 +24,7 @@ export default function RootLayout({
         <StoreProvider>
           <AudioPlayerProvider>
             {children}
+            <SignupModal />
           </AudioPlayerProvider>
         </StoreProvider>
       </body>
