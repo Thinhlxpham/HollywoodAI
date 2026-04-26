@@ -10,31 +10,68 @@ import Image from "next/image";
 import MovieIndividualSkeleton from "@/app/skeleton/MovieIndividualSkeleton";
 import Link from "next/link";
 
-function formatTime(value: number) {
-  if (!value || Number.isNaN(value)) return "00:00";
-  const minutes = Math.floor(value / 60);
-  const seconds = Math.floor(value % 60);
-  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`
-}
+
+
 
 export default function page({ params }: { params: { id: string } }) {
+
   const { id } = params;
   const [movie, setMovie] = useState<any>(null)
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [isFavorite, setIsFavorite] = useState(false)
+  const [isSubscription, setIsSubscription] = useState(false)
+  function getAudioDuration(url: string): Promise<number> {
+    return new Promise((resolve) => {
+      const audio = new Audio(url);
+      audio.addEventListener("loadedmetadata", () => {
+        resolve(audio.duration);
+      });
+    });
+  }
+
+  function formatTime(value: number) {
+    if (!value || Number.isNaN(value)) return "0:00";
+    const hours = Math.floor(value / 3600);
+    const minutes = Math.floor((value % 3600) / 60);
+    const seconds = Math.floor(value % 60);
+
+    if (hours > 0) {
+      return `${hours}h ${String(minutes).padStart(2, "0")}m`;
+    }
+    return `${minutes}:${String(seconds).padStart(2, "0")}`;
+  }
+
+  useEffect(() => {
+    // Check user subscription from localStorage (or your auth system)
+    const user = localStorage.getItem("user")
+    if (user) {
+      const parsed = JSON.parse(user)
+      setIsSubscription(parsed?.isPremium === true)
+    }
+  }, [])
+
 
   async function IndividualMovie() {
     const response = await fetch(`https://advanced-internship-api-production.up.railway.app/movies/${id}`);
     const data = await response.json()
     const result = data.data
+    if (result.audioLink) {
+      const duration = await getAudioDuration(
+        `https://advanced-internship-api-production.up.railway.app/${result.audioLink}`
+      )
+      result.duration = duration
+    } else {
+      result.duration = 0
+    }
     setMovie(result)
     setLoading(false)
+
   }
   useEffect(() => {
     IndividualMovie()
     setLoading(true)
-  }, [id])
+  }, [])
 
   function saveFavoriteMovie() {
     const stored = localStorage.getItem("favorites")
@@ -136,7 +173,7 @@ export default function page({ params }: { params: { id: string } }) {
               </div>
 
             </div>
-            <Link href={`/player/${id}`}
+            <Link href={movie?.subscriptionRequired && !isSubscription ? "/plans" : `/player/${id}`}
             >
               <button
                 className="flex items-center cursor-pointer gap-[8px]

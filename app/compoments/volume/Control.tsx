@@ -97,20 +97,17 @@ export default function Control({ params }: { params: { id: string } }) {
     <>
       {/* Track info */}
       <div className="flex gap-[12px] w-[calc(100%/3)]">
-        {movie?.imageLink ? (
+        {movie?.imageLink && (
           <figure className="flex max-h-[48px] h-[48px] min-h-[48px] w-auto">
             <Image
               src={movie.imageLink}
               width={50}
               height={50}
-              alt={movie?.id || "cover"}
+              alt={movie?.id}
             />
           </figure>
-        ) : (
-          <div className="flex items-center justify-center bg-[#171a1f] w-[50px] h-[50px] rounded-[8px] text-[12px] text-white">
-            No image
-          </div>
-        )}
+        )
+        }
         <div className="text-white text-[14px] flex flex-col gap-[4px] justify-center">
           <p>{movie?.title}</p>
           <p>{movie?.director}</p>

@@ -112,7 +112,8 @@ export default function SignupModal({ redirectTo = "/dashboard" }: LogInModalPro
       console.error("Guest login error:", error);
       alert("Failed to log in as guest. Please try again.");
     } finally {
-      dispatch(closeSignupModal());
+      setTimeout(() => dispatch(closeSignupModal()), 1500)
+
     }
     setLoading(false)
   }
@@ -223,7 +224,7 @@ export default function SignupModal({ redirectTo = "/dashboard" }: LogInModalPro
               onClick={() => handleSignup()}
             >
               {loading ? (
-                <CircularProgress className="w-[20px] h-[20px] animate-loading-spinner" />
+                "Loading..."
               ) : (
                 "Sign Up"
               )}
@@ -236,6 +237,7 @@ export default function SignupModal({ redirectTo = "/dashboard" }: LogInModalPro
               onClick={() => {
                 dispatch(closeSignupModal());
                 dispatch(openLoginModal());
+
               }}
             >
               Log In
