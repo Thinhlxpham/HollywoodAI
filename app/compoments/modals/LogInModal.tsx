@@ -194,7 +194,6 @@ export default function LogInModal({ redirectTo = "/dashboard" }: LogInModalProp
             <span
               className="text-[13px] text-[#4f46e5] mb-[12px] cursor-pointer text-right"
               onClick={() => {
-                dispatch(closeLoginModal());
                 dispatch(openForgotModal());
               }}
             >
@@ -209,7 +208,7 @@ export default function LogInModal({ redirectTo = "/dashboard" }: LogInModalProp
               onClick={() => handleLogIn()}
             >
               {loading ? (
-                <CircularProgress className="w-[20px] h-[20px] animate-loading-spinner" />
+                "Loading..."
               ) : (
                 "Log In"
               )}
